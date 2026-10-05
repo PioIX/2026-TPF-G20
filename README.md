@@ -24,7 +24,5 @@ estadisticas.
 
 ## Diseño inicial
 
-<img src=["imagen.jpg"](https://i.postimg.cc/HntT3cKV/Captura-de-pantalla-2026-10-05-082616.png)>
-<img src=["imagen.jpg"](https://i.postimg.cc/HntT3cKV/Captura-de-pantalla-2026-10-05-082616.png)](https://i.postimg.cc/zDxMwF2T/Captura-de-pantalla-2026-10-05-083018.png)>
-
+<img src="https://i.postimg.cc/HntT3cKV/Captura-de-pantalla-2026-10-05-082616.png" alt="Diseño inicial">
 <img src="https://i.postimg.cc/zDxMwF2T/Captura-de-pantalla-2026-10-05-083018.png" alt="Diseño inicial">
