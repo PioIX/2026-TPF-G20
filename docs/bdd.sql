@@ -1,6 +1,9 @@
+DROP TABLE IF EXISTS usuarioXjuego;
 DROP TABLE IF EXISTS juegos;
 DROP TABLE IF EXISTS usuarios;
 DROP TABLE IF EXISTS cartas;
+DROP TABLE IF EXISTS jugadas;
+
 
 CREATE TABLE usuarios (
     idUsuario int primary key,
@@ -9,23 +12,35 @@ CREATE TABLE usuarios (
     `password` varchar(1000)
 );
 
+
 CREATE TABLE juegos (
 	idJuego int primary key,
-    idUsuario1 int,
-    idUsuario2 int,
     puntosJ1 int,
     puntosJ2 int,
     a30puntos bool,
-    conFlor bool,
-    foreign key(idUsuario1) references usuarios(idUsuario),
-    foreign key(idUsuario2) references usuarios(idUsuario)
+    conFlor bool
+);
+
+CREATE TABLE usuarioXjuego (
+idJuego int primary key,
+idUsuario1 int,
+idUsuario2 int,
+    FOREIGN KEY (idJuego) REFERENCES juegos(idJuego),
+    FOREIGN KEY (idUsuario1) REFERENCES usuarios(idUsuario),
+    FOREIGN KEY (idUsuario2) REFERENCES usuarios(idUsuario)
 );
 
 CREATE TABLE cartas (
-idCarta int primary key,
-numero int,
-palo varchar(1000),
-valor int
+	idCarta int primary key,
+	numero int,
+	palo varchar(1000),
+	valor int
+);
+
+CREATE TABLE jugadas (
+	idJugada int primary key,
+    canto bool,
+    jugo bool
 );
 
 INSERT INTO cartas (idCarta, numero, palo, valor) VALUES
@@ -69,3 +84,5 @@ INSERT INTO cartas (idCarta, numero, palo, valor) VALUES
 (38, 10, 'Copas', 5), 
 (39, 11, 'Copas', 6), 
 (40, 12, 'Copas', 7);
+
+SELECT * FROM cartas;
