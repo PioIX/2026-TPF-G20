@@ -22,6 +22,23 @@ async function obtenerSiguienteId(tabla, columna) {
   return (resultado[0].maxId || 0) + 1;
 }
 
+// Guarda una partida terminada en juegos + usuarioXjuego
+async function guardarJuego(idUsuario1, idUsuario2, puntosJ1, puntosJ2, a30puntos, conFlor) {
+  const idJuego = await obtenerSiguienteId("juegos", "idJuego");
+
+  await realizarQuery(
+    "INSERT INTO juegos (idJuego, puntosJ1, puntosJ2, a30puntos, conFlor) VALUES (?, ?, ?, ?, ?)",
+    [idJuego, puntosJ1, puntosJ2, a30puntos, conFlor]
+  );
+
+  await realizarQuery(
+    "INSERT INTO usuarioXjuego (idJuego, idUsuario1, idUsuario2) VALUES (?, ?, ?)",
+    [idJuego, idUsuario1, idUsuario2]
+  );
+
+  return idJuego;
+}
+
 // -----------------------------------------------------------------------------
 // MIDDLEWARES Y CONFIGURACIÓN GENERAL
 
@@ -70,61 +87,86 @@ io.use((socket, next) => {
   sessionMiddleware(socket.request, {}, next);
 });
 
+// -----------------------------------------------------------------------------
+// SALAS (2 jugadores por sala)
+
+const salas = {}; // { "sala1": [{ idUsuario, nickname }, ...], ... }
+const MAX_JUGADORES = 2;
+let contadorSalas = 1;
+
+// Devuelve una sala con lugar libre, o crea una nueva
+function buscarSalaLibre() {
+  for (const nombre in salas) {
+    if (salas[nombre].length < MAX_JUGADORES) return nombre;
+  }
+  const nueva = "sala" + contadorSalas;
+  contadorSalas++;
+  salas[nueva] = [];
+  return nueva;
+}
+
+// Devuelve true si el usuario ya está en alguna sala
+function usuarioYaEnSala(idUsuario) {
+  for (const nombre in salas) {
+    if (salas[nombre].some((j) => j.idUsuario === idUsuario)) return true;
+  }
+  return false;
+}
+
 io.on("connection", (socket) => {
   const req = socket.request;
 
-  socket.on("joinRoom", (data) => {
-    if (req.session.room != undefined && req.session.room.length > 0) {
-      socket.leave(req.session.room);
+  // El jugador pide sala después de iniciar sesión
+  socket.on("buscarSala", () => {
+    const usuario = req.session.user;
+
+    if (!usuario) {
+      return socket.emit("errorSala", { mensaje: "Debes iniciar sesión." });
     }
-    req.session.room = data.room;
-    socket.join(req.session.room);
-  });
+    if (socket.data.room) return; // Este socket ya tiene sala
+    if (usuarioYaEnSala(usuario.idUsuario)) {
+      return socket.emit("errorSala", { mensaje: "Ya estás en una partida." });
+    }
 
-  socket.on("sendMessage", async (data) => {
-    const { message, idUsuario } = data;
-    const idChat = req.session.room;
+    const sala = buscarSalaLibre();
+    salas[sala].push({ idUsuario: usuario.idUsuario, nickname: usuario.nickname });
 
-    try {
-      const idMensaje = await obtenerSiguienteId("mensajes", "idMensaje");
-      await realizarQuery(
-        "INSERT INTO mensajes (idMensaje, idChat, idUsuario, contenido, fecha) VALUES (?, ?, ?, ?, NOW())",
-        [idMensaje, idChat, idUsuario, message]
-      );
+    socket.data.room = sala;
+    socket.data.idUsuario = usuario.idUsuario;
+    socket.join(sala);
 
-      io.to(idChat).emit("newMessage", {
-        idMensaje,
-        idChat,
-        idUsuario,
-        contenido: message,
-        fecha: new Date(),
-      });
-    } catch (error) {
-      console.log("Error al guardar el mensaje:", error.message);
+    socket.emit("salaAsignada", { room: sala });
+    io.to(sala).emit("jugadoresSala", salas[sala]);
+
+    // Si la sala se llenó, arranca la partida
+    if (salas[sala].length === MAX_JUGADORES) {
+      io.to(sala).emit("empiezaPartida", { jugadores: salas[sala] });
     }
   });
 
   socket.on("disconnect", () => {
-    console.log("Disconnect");
+    const sala = socket.data.room;
+    if (!sala || !salas[sala]) return;
+
+    salas[sala] = salas[sala].filter(
+      (j) => j.idUsuario !== socket.data.idUsuario
+    );
+
+    if (salas[sala].length === 0) {
+      delete salas[sala]; // Sala vacía: se borra
+    } else {
+      io.to(sala).emit("rivalDesconectado", salas[sala]); // Avisamos al que quedó
+    }
   });
 });
 
 // -----------------------------------------------------------------------------
 // RUTAS: AUTENTICACIÓN Y USUARIOS
 
-app.get("/usuarioWP", async function (req, res) {
-  try {
-    let respuesta = await realizarQuery("SELECT * FROM usuarioWP;");
-    res.send({ usuarios: respuesta });
-  } catch (error) {
-    res.status(500).send({ error: error.message });
-  }
-});
-
 async function loginHandler(req, res) {
-  const { mail, contrasenia } = req.body;
+  const { email, password } = req.body;
 
-  if (!mail || !contrasenia) {
+  if (!email || !password) {
     return res.status(400).send({
       error: "DATOS_INCOMPLETOS",
       mensaje: "Debes enviar email y contraseña.",
@@ -133,8 +175,8 @@ async function loginHandler(req, res) {
 
   try {
     const buscarUsuario = await realizarQuery(
-      "SELECT * FROM usuarioWP WHERE mail = ?",
-      [mail]
+      "SELECT * FROM usuarios WHERE email = ?",
+      [email]
     );
 
     if (buscarUsuario.length === 0) {
@@ -145,12 +187,12 @@ async function loginHandler(req, res) {
     }
 
     const usuarioValido = buscarUsuario[0];
-    const passwordCorrecta = usuarioValido.contrasenia === contrasenia;
+    const passwordCorrecta = usuarioValido.password === password;
 
     if (passwordCorrecta) {
       req.session.user = {
         idUsuario: usuarioValido.idUsuario,
-        nombre: usuarioValido.nombre,
+        nickname: usuarioValido.nickname,
       };
 
       res.send({
@@ -158,7 +200,7 @@ async function loginHandler(req, res) {
         mensaje: "¡Ingreso exitoso!",
         usuario: {
           idUsuario: usuarioValido.idUsuario,
-          nombre: usuarioValido.nombre,
+          nickname: usuarioValido.nickname,
         },
       });
     } else {
@@ -176,19 +218,19 @@ async function loginHandler(req, res) {
 }
 
 async function registroHandler(req, res) {
-  const { nombre, mail, contrasenia } = req.body;
+  const { nickname, email, password } = req.body;
 
-  if (!nombre || !mail || !contrasenia) {
+  if (!nickname || !email || !password) {
     return res.status(400).send({
       registroExitoso: false,
-      mensaje: "Debes enviar nombre, email y contraseña.",
+      mensaje: "Debes enviar nickname, email y contraseña.",
     });
   }
 
   try {
     const existente = await realizarQuery(
-      "SELECT * FROM usuarioWP WHERE mail = ?",
-      [mail]
+      "SELECT * FROM usuarios WHERE email = ?",
+      [email]
     );
 
     if (existente.length > 0) {
@@ -198,11 +240,11 @@ async function registroHandler(req, res) {
       });
     }
 
-    const nextId = await obtenerSiguienteId("usuarioWP", "idUsuario");
+    const nextId = await obtenerSiguienteId("usuarios", "idUsuario");
 
     await realizarQuery(
-      "INSERT INTO usuarioWP (idUsuario, nombre, mail, contrasenia, foto) VALUES (?, ?, ?, ?, ?)",
-      [nextId, nombre, mail, contrasenia, null]
+      "INSERT INTO usuarios (idUsuario, nickname, email, password) VALUES (?, ?, ?, ?)",
+      [nextId, nickname, email, password]
     );
 
     res.send({
@@ -221,156 +263,33 @@ async function registroHandler(req, res) {
 // Rutas pedidas por la consigna
 app.post("/login", loginHandler);
 app.post("/register", registroHandler);
-app.post("/api/login", loginHandler);
-app.post("/api/registro", registroHandler);
 
 // -----------------------------------------------------------------------------
-// RUTAS: CHATS Y MENSAJES
+// RUTAS: ESTADÍSTICAS
 
-// Listado de chats del usuario logueado
-app.get("/api/chats", requiereSesion, async function (req, res) {
-  const idUsuario = req.session.user.idUsuario;
+app.get("/estadisticas", requiereSesion, async function (req, res) {
+  const id = req.session.user.idUsuario;
 
   try {
-    const chats = await realizarQuery(
+    const resultado = await realizarQuery(
       `SELECT
-         c.idChat,
-         c.esGrupo,
-         CASE WHEN c.esGrupo THEN c.nombre ELSE otro.nombre END AS nombre,
-         CASE WHEN c.esGrupo THEN c.foto ELSE otro.foto END AS foto,
-         otro.idUsuario AS idContacto
-       FROM chats c
-       JOIN chatXusuario cxu ON cxu.idChat = c.idChat AND cxu.idUsuario = ?
-       LEFT JOIN chatXusuario cxu2
-         ON cxu2.idChat = c.idChat AND cxu2.idUsuario <> ? AND c.esGrupo = FALSE
-       LEFT JOIN usuarioWP otro ON otro.idUsuario = cxu2.idUsuario
-       ORDER BY c.idChat DESC`,
-      [idUsuario, idUsuario]
+         SUM((uxj.idUsuario1 = ? AND j.puntosJ1 > j.puntosJ2) OR
+             (uxj.idUsuario2 = ? AND j.puntosJ2 > j.puntosJ1)) AS victorias,
+         SUM((uxj.idUsuario1 = ? AND j.puntosJ1 < j.puntosJ2) OR
+             (uxj.idUsuario2 = ? AND j.puntosJ2 < j.puntosJ1)) AS derrotas
+       FROM juegos j
+       JOIN usuarioXjuego uxj ON uxj.idJuego = j.idJuego
+       WHERE uxj.idUsuario1 = ? OR uxj.idUsuario2 = ?`,
+      [id, id, id, id, id, id]
     );
 
-    res.send({ chats });
-  } catch (error) {
-    res
-      .status(500)
-      .send({
-        mensaje: "No se pudieron obtener los chats",
-        error: error.message,
-      });
-  }
-});
-
-// Crear chat individual a partir de mail
-app.post("/api/chats", requiereSesion, async function (req, res) {
-  const { mail } = req.body;
-
-  try {
-    const encontrado = await realizarQuery(
-      "SELECT * FROM usuarioWP WHERE mail = ?",
-      [mail]
-    );
-
-    if (encontrado.length === 0) {
-      return res.status(404).send({
-        error: "USUARIO_NO_EXISTE",
-        mensaje: `El usuario ${mail} no existe.`,
-      });
-    }
-
-    const idChat = await obtenerSiguienteId("chats", "idChat");
-    await realizarQuery(
-      "INSERT INTO chats (idChat, nombre, esGrupo, foto) VALUES (?, NULL, FALSE, NULL)",
-      [idChat]
-    );
-
-    const idsTotal = [req.session.user.idUsuario, encontrado[0].idUsuario];
-    for (const idUsuario of idsTotal) {
-      await realizarQuery(
-        "INSERT INTO chatXusuario (idChat, idUsuario) VALUES (?, ?)",
-        [idChat, idUsuario]
-      );
-    }
-
-    res.send({ chatCreado: true, idChat });
-  } catch (error) {
-    res
-      .status(500)
-      .send({ mensaje: "No se pudo crear el chat", error: error.message });
-  }
-});
-
-// Crear chat grupal a partir de mails
-app.post("/api/grupos", requiereSesion, async function (req, res) {
-  const { nombre, foto, mails } = req.body;
-
-  try {
-    const idsUsuarios = [];
-    for (const mail of mails) {
-      const encontrado = await realizarQuery(
-        "SELECT * FROM usuarioWP WHERE mail = ?",
-        [mail]
-      );
-      if (encontrado.length === 0) {
-        return res.status(404).send({
-          error: "USUARIO_NO_EXISTE",
-          mensaje: `El usuario ${mail} no existe.`,
-        });
-      }
-      idsUsuarios.push(encontrado[0].idUsuario);
-    }
-
-    const idChat = await obtenerSiguienteId("chats", "idChat");
-    await realizarQuery(
-      "INSERT INTO chats (idChat, nombre, esGrupo, foto) VALUES (?, ?, TRUE, ?)",
-      [idChat, nombre, foto || null]
-    );
-
-    const idsTotal = [req.session.user.idUsuario, ...idsUsuarios];
-    for (const idUsuario of idsTotal) {
-      await realizarQuery(
-        "INSERT INTO chatXusuario (idChat, idUsuario) VALUES (?, ?)",
-        [idChat, idUsuario]
-      );
-    }
-
-    res.send({ grupoCreado: true, idChat });
-  } catch (error) {
-    res
-      .status(500)
-      .send({ mensaje: "No se pudo crear el grupo", error: error.message });
-  }
-});
-
-// Historial de mensajes de un chat
-app.get("/api/mensajes/:idChat", requiereSesion, async function (req, res) {
-  const { idChat } = req.params;
-  const idUsuario = req.session.user.idUsuario;
-
-  try {
-    const pertenencia = await realizarQuery(
-      "SELECT 1 FROM chatXusuario WHERE idChat = ? AND idUsuario = ?",
-      [idChat, idUsuario]
-    );
-
-    if (pertenencia.length === 0) {
-      return res.status(403).send({
-        error: "ACCESO_DENEGADO",
-        mensaje: "No tienes permiso para ver los mensajes de este chat.",
-      });
-    }
-
-    const mensajes = await realizarQuery(
-      `SELECT m.idMensaje, m.contenido, m.fecha, m.idUsuario, u.nombre
-       FROM mensajes m 
-       JOIN usuarioWP u ON u.idUsuario = m.idUsuario
-       WHERE m.idChat = ? 
-       ORDER BY m.fecha ASC`,
-      [idChat]
-    );
-
-    res.send({ mensajes });
+    res.send({
+      victorias: Number(resultado[0].victorias) || 0,
+      derrotas: Number(resultado[0].derrotas) || 0,
+    });
   } catch (error) {
     res.status(500).send({
-      mensaje: "No se pudieron obtener los mensajes",
+      mensaje: "No se pudieron obtener las estadísticas",
       error: error.message,
     });
   }
