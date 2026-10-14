@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 4000;
 const pool = require("./modulos/mysql");
 
 // -----------------------------------------------------------------------------
-// FUNCIONES AUXILIARES
+// 
 
 async function realizarQuery(sql, params = []) {
   const [rows] = await pool.query(sql, params);
@@ -40,7 +40,7 @@ async function guardarJuego(idUsuario1, idUsuario2, puntosJ1, puntosJ2, a30punto
 }
 
 // -----------------------------------------------------------------------------
-// MIDDLEWARES Y CONFIGURACIÓN GENERAL
+// 
 
 const ORIGENES_PERMITIDOS = ["http://localhost:3000", "http://localhost:3001"];
 
@@ -48,7 +48,7 @@ app.use(cors({ origin: ORIGENES_PERMITIDOS, credentials: true }));
 app.use(express.json());
 
 const sessionMiddleware = session({
-  secret: "supersarasa",
+  secret: "TITANFALL2",
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -69,7 +69,7 @@ function requiereSesion(req, res, next) {
 }
 
 // -----------------------------------------------------------------------------
-// SERVIDOR HTTP Y SOCKET.IO
+
 
 const server = app.listen(PORT, () => {
   console.log(`Servidor NodeJS corriendo en http://localhost:${PORT}/`);
@@ -88,7 +88,7 @@ io.use((socket, next) => {
 });
 
 // -----------------------------------------------------------------------------
-// SALAS (2 jugadores por sala)
+
 
 const salas = {}; // { "sala1": [{ idUsuario, nickname }, ...], ... }
 const MAX_JUGADORES = 2;
