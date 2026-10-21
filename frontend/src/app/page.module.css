@@ -1,0 +1,157 @@
+.fondo {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #1e1b2e, #0b0a12 70%);
+  font-family: system-ui, sans-serif;
+  color: #e5e7eb;
+  padding: 16px;
+}
+
+.chat {
+  width: 100%;
+  max-width: 520px;
+  height: 85vh;
+  background: #15131f;
+  border: 1px solid #2a2638;
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(220, 38, 38, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------- Header ---------- */
+.header {
+  background: linear-gradient(90deg, #7f1d1d, #b91c1c);
+  color: white;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.salaActual {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.conectado {
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.desconectado {
+  background: #6b7280;
+}
+
+/* ---------- Configuración (nombre y sala) ---------- */
+.config {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2638;
+  background: #1a1726;
+}
+
+/* ---------- Mensajes ---------- */
+.mensajes {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vacio {
+  margin: auto;
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* ---------- Barra de envío ---------- */
+.enviar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #2a2638;
+  background: #1a1726;
+}
+
+/* ---------- Inputs y botones ---------- */
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #0f0d17;
+  color: #e5e7eb;
+  border: 1px solid #2f2a40;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.input::placeholder {
+  color: #6b7280;
+}
+
+.input:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+.boton {
+  padding: 10px 16px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.boton:hover {
+  background: #b91c1c;
+}
+
+.botonSecundario {
+  padding: 10px 16px;
+  background: transparent;
+  color: #f87171;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.botonSecundario:hover {
+  background: rgba(220, 38, 38, 0.1);
+}

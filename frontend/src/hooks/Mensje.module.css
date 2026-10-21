@@ -1,0 +1,30 @@
+.burbuja {
+  max-width: 75%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.ajeno {
+  align-self: flex-start;
+  background: #24203a;
+  color: #e5e7eb;
+  border-bottom-left-radius: 4px;
+}
+
+.mio {
+  align-self: flex-end;
+  background: #b91c1c;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.username {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  opacity: 0.75;
+}

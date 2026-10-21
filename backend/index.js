@@ -9,11 +9,11 @@ const pool = require("./modulos/mysql");
 
 // -----------------------------------------------------------------------------
 // 
-/*
+
 async function realizarQuery(sql, params = []) {
   const [rows] = await pool.query(sql, params);
   return rows;
-}*/
+}
 
 async function obtenerSiguienteId(tabla, columna) {
   const resultado = await realizarQuery(
