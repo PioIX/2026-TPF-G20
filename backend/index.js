@@ -4,7 +4,7 @@ const session = require('express-session');				// Para el manejo de las variable
 const cors = require('cors');
 
 // AGREGADO: conexión a la base de datos (para buscar el usuario en el login)
-const pool = require('./modulos/mysql');
+const { realizarQuery } = require('backend/modulos/mysql.js');
 
 
 const app = express();                                  // Inicializo express para el manejo de las peticiones
@@ -63,10 +63,6 @@ io.use((socket, next) => {
 // -----------------------------------------------------------------------------
 // AGREGADO: función para hacer consultas a la base de datos
 
-async function realizarQuery(sql, params = []) {
-	const [rows] = await pool.query(sql, params);
-	return rows;
-}
 
 // -----------------------------------------------------------------------------
 // AGREGADO: LOGIN
@@ -116,13 +112,13 @@ async function handleLogin(req, res) {
 			});
 		}
 	} catch (error) {
+		console.log("Error en login:", error)   // se ve en la terminal del back
 		return res.status(500).send({
 			mensaje: "Error en la base de datos",
 			error: error.message,
-		});
-	}
+	});
 }
-
+}
 app.post("/login", handleLogin);   // AGREGADO: ruta que usa el page del login
 
 // -----------------------------------------------------------------------------

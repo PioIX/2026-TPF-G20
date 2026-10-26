@@ -18,7 +18,7 @@ function Login() {
     setError("")
 f
     try {
-      const respuesta = await fetch("http://localhost:3000/login", {
+      const respuesta = await fetch("http://localhost:4000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",   // IMPORTANTE: sin esto no se guarda la cookie de sesión
@@ -28,14 +28,15 @@ f
       const data = await respuesta.json()
 
       if (data.loginExitoso) {
-        router.push("/")   // si salió bien, va a la página del juego
+        router.push("http://localhost:3000")   // si salió bien, va a la página del juego
       } else {
         setError(data.mensaje)   // muestra el mensaje que manda el back
       }
-    } catch (e) {
-      setError("No se pudo conectar con el servidor")
-    }
+  } catch (e) {
+     console.log("Error en el fetch:", e)
+     setError("No se pudo conectar con el servidor")
   }
+}
 
   return (
     <div className={styles.fondo}>
