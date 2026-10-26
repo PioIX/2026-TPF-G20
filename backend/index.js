@@ -135,12 +135,38 @@ const listaMensajes = []
 // La lista de mensajes tiene objetos de la siguiente forma
 // { username: texto, mensaje: texto, room: texto, id: number }
 
+// AGREGADO: información de turnos de cada sala
+// Ejemplo: { "1": { jugadores: ["martin", "jose"], turno: 0 } }
+// turno es la posición en la lista del jugador al que le toca
+const salas = {}
+
+// AGREGADO: saca a un jugador de la lista de su sala y acomoda el turno
+function sacarJugador(room, username) {
+	const sala = salas[room]
+	if (!sala) return
+
+	const posicion = sala.jugadores.indexOf(username)
+	if (posicion === -1) return
+
+	sala.jugadores.splice(posicion, 1)
+
+	// Si se fue alguien que estaba antes del turno actual, corro el turno uno para atrás
+	if (posicion < sala.turno) sala.turno--
+	// Si el turno quedó fuera de la lista, vuelve al primero
+	if (sala.turno >= sala.jugadores.length) sala.turno = 0
+
+	io.to(room).emit("turno", { jugador: sala.jugadores[sala.turno] || "" })
+}
+
 // Cuando cualquier persona (socket) se conecte...
 io.on("connection", (socket) => {
 
 	// Decidimos qué hacer con cada persona (socket)
 	const req = socket.request;
 	console.log("Cliente conectado")
+
+	// AGREGADO: nombre con el que este socket se anotó en los turnos
+	let miUsername = ""
 
 	// Asignar room predeterminada si no está en ninguna room
 	if (!req.session.room) {
@@ -152,6 +178,9 @@ io.on("connection", (socket) => {
 	// Por ejemplo { room: "1" }
 	socket.on('joinRoom', data => {
 
+		// AGREGADO: si ya estaba anotado en otra sala, lo saco de esa lista de turnos
+		if (miUsername) sacarJugador(req.session.room, miUsername)
+
 		// socket.leave para salir de la room actual
 		if (req.session.room != undefined && req.session.room.length > 0) { socket.leave(req.session.room); }
 
@@ -160,6 +189,16 @@ io.on("connection", (socket) => {
 		socket.join(req.session.room);
 
 		console.log("El socket ahora está en la room:", req.session.room)
+
+		// AGREGADO: anoto al jugador en la lista de la sala (si no estaba)
+		miUsername = data.username
+		if (!salas[data.room]) salas[data.room] = { jugadores: [], turno: 0 }
+		if (!salas[data.room].jugadores.includes(data.username)) {
+			salas[data.room].jugadores.push(data.username)
+		}
+
+		// AGREGADO: aviso a toda la sala de quién es el turno
+		io.to(data.room).emit("turno", { jugador: salas[data.room].jugadores[salas[data.room].turno] })
 	});
 
 	// Cada vez que UNA persona me envía un mensaje, le mando una respuestaServidor a TODOS
@@ -167,6 +206,10 @@ io.on("connection", (socket) => {
 
 		// Variable que contiene la sala a la que pertenece el socket actual
 		const room = req.session.room
+
+		// AGREGADO: si no es el turno de quien mandó el mensaje, lo ignoro
+		const sala = salas[room]
+		if (!sala || sala.jugadores[sala.turno] !== data.username) return
 
 		// data tiene claves username y mensaje
 
@@ -177,6 +220,16 @@ io.on("connection", (socket) => {
 		// Emitimos a toda la room un evento que contenga los 3 datos relevantes
 		io.to(room).emit("respuestaServidor", listaMensajes.filter( (mensaje) => { return mensaje.room == room } ) )
 
+		// AGREGADO: paso el turno al siguiente jugador
+		sala.turno++
+		if (sala.turno >= sala.jugadores.length) sala.turno = 0   // terminó la ronda: vuelve al primero
+		io.to(room).emit("turno", { jugador: sala.jugadores[sala.turno] })
+
+	})
+
+	// AGREGADO: si alguien se va, lo saco de la lista para que el juego no se trabe
+	socket.on("disconnect", () => {
+		if (miUsername) sacarJugador(req.session.room, miUsername)
 	})
 
 });

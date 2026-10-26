@@ -53,6 +53,7 @@ function Home() {
   const [textoRoom, setTextoRoom] = useState("")
   const [textoUsername, setTextoUsername] = useState("")
   const [listaMensajes, setListaMensajes] = useState([])
+  const [turnoDe, setTurnoDe] = useState("")   // AGREGADO: nombre del jugador al que le toca
 
   useEffect(
     () => {
@@ -63,6 +64,11 @@ function Home() {
         console.log(data)
         setListaMensajes(data)
 
+      });
+
+      // AGREGADO: el servidor avisa de quién es el turno
+      socket.on("turno", (data) => {
+        setTurnoDe(data.jugador)
       });
 
     },
@@ -79,7 +85,7 @@ function Home() {
 
           <div className={styles.estado}>
             <span className={`${styles.punto} ${isConnected ? styles.conectado : styles.desconectado}`}></span>
-            {isConnected ? "Websocket Conectado" : "Error"}
+            {isConnected ? "conexion con usuarios exitosa" : "Error"}
           </div>
         </div>
 
@@ -99,9 +105,10 @@ function Home() {
             onChange={ (e) => { setTextoRoom(e.target.value) } }
           ></input>
 
+          {/* MODIFICADO: el joinRoom de abajo ahora también manda username */}
           <button
             className={styles.botonSecundario}
-            onClick={ () => { socket.emit("joinRoom", { room: textoRoom }) } }
+            onClick={ () => { socket.emit("joinRoom", { room: textoRoom, username: textoUsername }) } }
           >CambiarSala</button>
         </div>
 
@@ -114,17 +121,25 @@ function Home() {
           }
         </div>
 
+        {/* AGREGADO: cartel de turno */}
+        <p className={styles.turno}>
+          {turnoDe === textoUsername ? "¡Es tu turno!" : turnoDe ? `Turno de ${turnoDe}` : "Unite a una sala para jugar"}
+        </p>
+
         {/* ---------- Barra para escribir ---------- */}
+        {/* AGREGADO: el input y el botón tienen disabled (bloqueados si no es tu turno) */}
         <div className={styles.enviar}>
           <input
             className={styles.input}
             type='text'
             placeholder='ingrese texto'
+            disabled={turnoDe !== textoUsername}
             onChange={ (e) => { setTexto(e.target.value) } }
           ></input>
 
           <button
             className={styles.boton}
+            disabled={turnoDe !== textoUsername}
             onClick={ () => { socket.emit("mensaje", { mensaje: texto, username: textoUsername }) } }
           >Enviar</button>
         </div>
