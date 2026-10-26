@@ -5,10 +5,11 @@ const mySql = require("mysql2/promise");
  */
 const SQL_CONFIGURATION_DATA =
 {
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USERNAME,
-    password: process.env.MYSQL_PASSWORD, 
-    database: process.env.MYSQL_DB, 
+
+    host: "10.1.5.205",              // en tu casa: "186.19.136.253" // en el pio:"10.1.5.205"
+    user: "2026_5INF_G20",
+    password: "9122018",
+    database: "2026_5INF_G20",
     port: 3306,
     charset: 'UTF8_GENERAL_CI'
 }

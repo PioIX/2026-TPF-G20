@@ -4,7 +4,7 @@ const session = require('express-session');				// Para el manejo de las variable
 const cors = require('cors');
 
 // AGREGADO: conexión a la base de datos (para buscar el usuario en el login)
-const { realizarQuery } = require('backend/modulos/mysql.js');
+const { realizarQuery } = require('./modulos/mysql');
 
 
 const app = express();                                  // Inicializo express para el manejo de las peticiones
@@ -229,3 +229,53 @@ io.on("connection", (socket) => {
 	})
 
 });
+
+// -----------------------------------------------------------------------------
+// AGREGADO: REGISTRO
+
+async function handleRegister(req, res) {
+	const { nickname, email, password } = req.body;
+
+	if (!nickname || !email || !password) {
+		return res.status(400).send({
+			registroExitoso: false,
+			mensaje: "Debes enviar nombre, email y contraseña.",
+		});
+	}
+
+	try {
+		// Si el email ya existe, no se puede registrar de nuevo
+		const existente = await realizarQuery(
+			"SELECT * FROM usuarios WHERE email = ?",
+			[email]
+		);
+
+		if (existente.length > 0) {
+			return res.status(409).send({
+				registroExitoso: false,
+				mensaje: "Este correo ya está registrado",
+			});
+		}
+
+		// La tabla no usa auto_increment: el id nuevo es el máximo + 1
+		const maximo = await realizarQuery("SELECT MAX(idUsuario) AS maxId FROM usuarios");
+		const nuevoId = (maximo[0].maxId || 0) + 1;
+
+		await realizarQuery(
+			"INSERT INTO usuarios (idUsuario, nickname, email, password, victorias) VALUES (?, ?, ?, ?, 0)",
+			[nuevoId, nickname, email, password]
+		);
+
+		return res.send({
+			registroExitoso: true,
+			mensaje: "Registro exitoso",
+		});
+	} catch (error) {
+		console.log("Error en registro:", error)
+		return res.status(500).send({
+			registroExitoso: false,
+			mensaje: "No se pudo registrar el usuario",
+		});
+	}
+}
+app.post("/register", handleRegister);

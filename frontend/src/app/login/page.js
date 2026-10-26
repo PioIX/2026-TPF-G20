@@ -16,7 +16,7 @@ function Login() {
 
   async function iniciarSesion() {
     setError("")
-f
+
     try {
       const respuesta = await fetch("http://localhost:4000/login", {
         method: "POST",
@@ -63,13 +63,19 @@ f
         {/* Solo se muestra si hay un error */}
         {error && <p className={styles.error}>{error}</p>}
 
-        <button className={styles.boton} onClick={iniciarSesion}>
+                <button className={styles.boton} onClick={iniciarSesion}>
           Ingresar
         </button>
 
+        {/* Link para ir al registro */}
+        <p className={styles.subtitulo}>
+          ¿No tenés cuenta? <Link href="/register" className={styles.link}>Registrate</Link>
+        </p>
+        
       </div>
     </div>
   )
 }
 
 export default Login
+import Link from 'next/link'
