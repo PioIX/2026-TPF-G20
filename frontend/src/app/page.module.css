@@ -155,3 +155,20 @@
 .botonSecundario:hover {
   background: rgba(220, 38, 38, 0.1);
 }
+
+/* AGREGADO: cuadros del juego (sala de espera, rol, votación y resultado) */
+.rol {
+  margin: 8px 16px;
+  padding: 12px;
+  background: #1a1726;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rol p {
+  margin: 0;
+}
