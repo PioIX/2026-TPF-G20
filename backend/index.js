@@ -138,7 +138,7 @@ const salas = {}
 
 // AGREGADO: reglas del juego del impostor
 const MIN_JUGADORES = 3    // mínimo de jugadores para jugar
-const RONDAS_PISTAS = 2    // cuántas pistas da cada jugador antes de votar
+const RONDAS_PISTAS = 1    // cuántas pistas da cada jugador antes de votar
 
 // AGREGADO: saca a un jugador de la lista de su sala y acomoda el turno
 function sacarJugador(room, username) {
@@ -290,7 +290,7 @@ function contarVotos(room) {
 	// Si descubren al impostor ganan los normales. Si no (o hay empate) gana el impostor
 	let ganador = "impostor"
 	if (!empate && masVotado === sala.impostor) {
-		ganador = "normales"
+		ganador = "tripulantes"
 	}
 
 	if (empate) masVotado = ""
