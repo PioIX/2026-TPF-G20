@@ -7,8 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "dev:a": "cross-env NEXT_DIST_DIR=.next-a PORT=3000 next dev",
-    "dev:b": "cross-env NEXT_DIST_DIR=.next-b PORT=3001 next dev"
+        "dev:a": "cross-env NEXT_DIST_DIR=.next-a PORT=3000 next dev",
+        "dev:b": "cross-env NEXT_DIST_DIR=.next-b PORT=3001 next dev",
+        "dev:c": "cross-env NEXT_DIST_DIR=.next-a PORT=3002 next dev",
+        "dev:d": "cross-env NEXT_DIST_DIR=.next-b PORT=3003 next dev",
+        "dev:e": "cross-env NEXT_DIST_DIR=.next-a PORT=3004 next dev",
+        "dev:f": "cross-env NEXT_DIST_DIR=.next-b PORT=3005 next dev",
+        "dev:g": "cross-env NEXT_DIST_DIR=.next-a PORT=3006 next dev",
+        "dev:h": "cross-env NEXT_DIST_DIR=.next-b PORT=3007 next dev",
+        "dev:i": "cross-env NEXT_DIST_DIR=.next-b PORT=3008 next dev"
   },
   "dependencies": {
     "next": "16.3.3",

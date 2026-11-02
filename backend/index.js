@@ -9,12 +9,9 @@ const { realizarQuery } = require('./modulos/mysql');
 
 const app = express();                                  // Inicializo express para el manejo de las peticiones
 
-// MODIFICADO: antes era app.use(cors());
-// Para que el login pueda guardar la cookie de sesión, hay que indicar
-// el origen del front y habilitar credentials. Con cors() solo, el navegador
-// bloquea el login cuando el fetch usa credentials: "include".
+
 app.use(cors({
-	origin: ['http://localhost:3000', 'http://localhost:3001'],
+	origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005', 'http://localhost:3006', 'http://localhost:3007', 'http://localhost:3008'],
 	credentials: true
 }));
 
