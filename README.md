@@ -17,5 +17,3 @@ comunicación en tiempo real con WS
 Principales características esperadas del producto final: Juego multijugador con turnos y chat en vivo
 ## Diseño inicial
 
-<img src="https://i.postimg.cc/HntT3cKV/Captura-de-pantalla-2026-10-05-082616.png" alt="Diseño inicial">
-<img src="https://i.postimg.cc/zDxMwF2T/Captura-de-pantalla-2026-10-05-083018.png" alt="Diseño inicial">
