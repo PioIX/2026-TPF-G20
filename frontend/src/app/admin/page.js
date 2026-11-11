@@ -1,10 +1,11 @@
 "use client"
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-// Conecta la página con su archivo de estilos
-import styles from './page.module.css'
+// Usa el mismo css que el login
+import styles from '../login/page.module.css'
 
 // URL base del back (la misma que usás en el login)
 const API = "http://localhost:4000"
@@ -16,8 +17,7 @@ function Admin() {
   const [autorizado, setAutorizado] = useState(false)
 
   const [nombre, setNombre] = useState("")
-  const [goles, setGoles] = useState("")
-  const [pais, setPais] = useState("")
+  const [categoria, setCategoria] = useState("")
 
   const [resultados, setResultados] = useState([])
   const [mensaje, setMensaje] = useState("")
@@ -50,12 +50,12 @@ function Admin() {
   }
 
   // ---------- BUSCAR ----------
-  async function buscarFutbolista() {
+  async function buscar() {
     limpiarMensajes()
     setResultados([])
 
     if (!nombre) {
-      setError("Escribí el nombre del futbolista")
+      setError("Escribí el nombre de lo que quieres buscar")
       return
     }
 
@@ -68,10 +68,10 @@ function Admin() {
       }
 
       // El back puede devolver un array directo o { futbolistas: [...] }
-      const lista = Array.isArray(data) ? data : (data.futbolistas || [])
+      const lista = Array.isArray(data) ? data : (data.tematicaImpostor || [])
 
       if (lista.length === 0) {
-        setError("No se encontró ningún futbolista con ese nombre")
+        setError("No se encontró nada con ese nombre")
       }
       setResultados(lista)
     } catch (e) {
@@ -81,31 +81,29 @@ function Admin() {
   }
 
   // Al tocar un resultado, se cargan sus datos en el formulario
-  function elegirResultado(futbolista) {
-    setNombre(futbolista.nombre)
-    setGoles(futbolista.goles)
-    setPais(futbolista.pais)
+  function elegirResultado(tematicaImpostor) {
+    setNombre(tematicaImpostor.nombre)
+    setCategoria(tematicaImpostor.categoria)
     setResultados([])
   }
 
   // ---------- AGREGAR ----------
-  async function agregarFutbolista() {
+  async function agregar() {
     limpiarMensajes()
 
-    if (!nombre || goles === "" || !pais) {
-      setError("Completá nombre, goles y país")
+    if (!nombre ||  !categoria) {
+      setError("Completá todos los datos")
       return
     }
 
     try {
       const { ok, data } = await pedir("/admin/agregar", {
         nombre: nombre,
-        goles: Number(goles),
-        pais: pais
+        categoria: categoria
       })
 
       if (ok) {
-        setMensaje(data.mensaje || "Futbolista agregado")
+        setMensaje(data.mensaje || "se ha agregado correctamente")
       } else {
         setError(data.mensaje || "No se pudo agregar")
       }
@@ -116,11 +114,11 @@ function Admin() {
   }
 
   // ---------- ELIMINAR ----------
-  async function eliminarFutbolista() {
+  async function eliminar() {
     limpiarMensajes()
 
     if (!nombre) {
-      setError("Escribí el nombre del futbolista a eliminar")
+      setError("Escribí el nombre a eliminar")
       return
     }
 
@@ -128,9 +126,8 @@ function Admin() {
       const { ok, data } = await pedir("/admin/eliminar", { nombre: nombre })
 
       if (ok) {
-        setMensaje(data.mensaje || "Futbolista eliminado")
-        setGoles("")
-        setPais("")
+        setMensaje(data.mensaje || "se ha eliminado correctamente")
+        setCategoria("")
       } else {
         setError(data.mensaje || "No se pudo eliminar")
       }
@@ -161,19 +158,19 @@ function Admin() {
       <div className={styles.tarjeta}>
 
         <h1 className={styles.titulo}>Administrador</h1>
-        <p className={styles.subtitulo}>Gestioná los futbolistas del juego</p>
+        <p className={styles.subtitulo}>Gestioná de juego</p>
 
-        <label className={styles.label}>Nombre del futbolista</label>
+        <label className={styles.label}>Nombre</label>
         <input
           className={styles.input}
           type='text'
           placeholder='Se usa para buscar, agregar y eliminar'
           value={nombre}
           onChange={(e) => { setNombre(e.target.value) }}
-          onKeyDown={(e) => { if (e.key === "Enter") buscarFutbolista() }}
+          onKeyDown={(e) => { if (e.key === "Enter") buscar() }}
         ></input>
 
-        <button className={styles.boton} onClick={buscarFutbolista}>
+        <button className={styles.boton} onClick={buscar}>
           Buscar
         </button>
 
@@ -186,7 +183,7 @@ function Admin() {
                   className={styles.resultado}
                   onClick={() => { elegirResultado(f) }}
                 >
-                  {f.nombre} — {f.goles} goles ({f.pais})
+                  {f.nombre} — ({f.categoria})
                 </button>
               </li>
             ))}
@@ -195,34 +192,15 @@ function Admin() {
 
         <hr className={styles.separador}></hr>
 
-        <label className={styles.label}>Cantidad de goles</label>
-        <input
-          className={styles.input}
-          type='number'
-          min='0'
-          placeholder='Goles en mundiales'
-          value={goles}
-          onChange={(e) => { setGoles(e.target.value) }}
-        ></input>
-
-        <label className={styles.label}>País</label>
-        <input
-          className={styles.input}
-          type='text'
-          placeholder='Debe coincidir con el nombre del archivo de la bandera'
-          value={pais}
-          onChange={(e) => { setPais(e.target.value) }}
-        ></input>
-
         {/* Solo se muestran si hay mensaje o error */}
         {mensaje && <p className={styles.exito}>{mensaje}</p>}
         {error && <p className={styles.error}>{error}</p>}
 
-        <button className={styles.boton} onClick={agregarFutbolista}>
+        <button className={styles.boton} onClick={agregar}>
           Agregar
         </button>
 
-        <button className={styles.botonEliminar} onClick={eliminarFutbolista}>
+        <button className={styles.botonEliminar} onClick={eliminar}>
           Eliminar
         </button>
 
