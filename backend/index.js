@@ -528,7 +528,7 @@ async function handleRegister(req, res) {
 		const nuevoId = (maximo[0].maxId || 0) + 1;
 
 		await realizarQuery(
-			"INSERT INTO usuarios (idUsuario, nickname, email, password, victorias) VALUES (?, ?, ?, ?, 0)",
+			"INSERT INTO usuarios (idUsuario, nickname, email, password, victorias, esAdmin) VALUES (?, ?, ?, ?, 0, 0)",
 			[nuevoId, nickname, email, password]
 		);
 
