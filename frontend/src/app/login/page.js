@@ -6,14 +6,6 @@ import { useRouter } from 'next/navigation'
 // Conecta la página con su archivo de estilos
 import styles from './page.module.css'
 
-function Login() {
-
-  const router = useRouter()
-
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-
   async function iniciarSesion() {
     setError("")
 
@@ -27,16 +19,21 @@ function Login() {
 
       const data = await respuesta.json()
 
-      if (data.loginExitoso) {
+      sessionStorage.removeItem("esAdmin")   // por si quedó de otra sesión
+
+      if (data.loginExitoso && data.usuario.esAdmin) {
+        sessionStorage.setItem("esAdmin", "true")
+        router.push("http://localhost:3000/admin")   // administrador: va al panel
+      } else if (data.loginExitoso) {
         router.push("http://localhost:3000")   // si salió bien, va a la página del juego
       } else {
         setError(data.mensaje)   // muestra el mensaje que manda el back
       }
-  } catch (e) {
-     console.log("Error en el fetch:", e)
-     setError("No se pudo conectar con el servidor")
+    } catch (e) {
+      console.log("Error en el fetch:", e)
+      setError("No se pudo conectar con el servidor")
+    }
   }
-}
 
   return (
     <div className={styles.fondo}>
@@ -75,7 +72,7 @@ function Login() {
       </div>
     </div>
   )
-}
+
 
 export default Login
 import Link from 'next/link'

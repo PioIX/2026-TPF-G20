@@ -545,3 +545,225 @@ async function handleRegister(req, res) {
 	}
 }
 app.post("/register", handleRegister);
+
+//---------------------------Administrador----------------------------
+
+function requiereAdmin(req, res, next) {
+	if (!req.session.user || !req.session.user.esAdmin) {
+		return res.status(403).send({
+			mensaje: "Solo los administradores pueden hacer esto",
+		});
+	}
+	next();
+}
+
+// GET: busca palabras por nombre y/o por temática
+async function handleVerPalabras(req, res) {
+	const nombre = String(req.query.nombre || "").trim();
+	const categoria = String(req.query.categoria || "");
+
+	if (!nombre && !categoria) {
+		return res.status(400).send({
+			mensaje: "Debes enviar un nombre o una temática.",
+		});
+	}
+
+	if (categoria && !TEMATICAS.includes(categoria)) {
+		return res.status(400).send({
+			mensaje: "Temática no válida.",
+		});
+	}
+
+	try {
+		let consulta = "SELECT id, nombre, categoria FROM tematicaImpostor WHERE 1 = 1";
+		const parametros = [];
+
+		if (nombre) {
+			consulta += " AND nombre LIKE ?";
+			parametros.push("%" + nombre + "%");
+		}
+
+		if (categoria) {
+			consulta += " AND categoria = ?";
+			parametros.push(categoria);
+		}
+
+		consulta += " ORDER BY categoria, nombre";
+
+		const palabras = await realizarQuery(consulta, parametros);
+
+		return res.send({ palabras: palabras });
+	} catch (error) {
+		console.log("Error al buscar palabras:", error)
+		return res.status(500).send({
+			mensaje: "No se pudo buscar",
+		});
+	}
+}
+
+// POST: agrega una palabra nueva a una temática
+async function handleAgregarPalabra(req, res) {
+	const { nombre, categoria } = req.body;
+
+	if (!nombre || !categoria) {
+		return res.status(400).send({
+			agregadoExitoso: false,
+			mensaje: "Debes enviar nombre y temática.",
+		});
+	}
+
+	if (!TEMATICAS.includes(categoria)) {
+		return res.status(400).send({
+			agregadoExitoso: false,
+			mensaje: "Temática no válida.",
+		});
+	}
+
+	try {
+		// Si ya existe en esa temática, no se puede agregar de nuevo
+		const existente = await realizarQuery(
+			"SELECT * FROM tematicaImpostor WHERE nombre = ? AND categoria = ?",
+			[String(nombre).trim(), categoria]
+		);
+
+		if (existente.length > 0) {
+			return res.status(409).send({
+				agregadoExitoso: false,
+				mensaje: "Ya existe en esa temática",
+			});
+		}
+
+		// La tabla no usa auto_increment: el id nuevo es el máximo + 1
+		const maximo = await realizarQuery("SELECT MAX(id) AS maxId FROM tematicaImpostor");
+		const nuevoId = (maximo[0].maxId || 0) + 1;
+
+		await realizarQuery(
+			"INSERT INTO tematicaImpostor (id, nombre, categoria) VALUES (?, ?, ?)",
+			[nuevoId, String(nombre).trim(), categoria]
+		);
+
+		return res.send({
+			agregadoExitoso: true,
+			mensaje: "Palabra agregada con éxito",
+			id: nuevoId,
+		});
+	} catch (error) {
+		console.log("Error al agregar palabra:", error)
+		return res.status(500).send({
+			agregadoExitoso: false,
+			mensaje: "No se pudo agregar la palabra",
+		});
+	}
+}
+
+// PUT: cambia el nombre y/o la temática de una palabra que ya existe
+async function handleEditarPalabra(req, res) {
+	const { id, nombre, categoria } = req.body;
+
+	if (!id || !nombre || !categoria) {
+		return res.status(400).send({
+			editadoExitoso: false,
+			mensaje: "Debes enviar id, nombre y temática.",
+		});
+	}
+
+	if (!TEMATICAS.includes(categoria)) {
+		return res.status(400).send({
+			editadoExitoso: false,
+			mensaje: "Temática no válida.",
+		});
+	}
+
+	try {
+		const existente = await realizarQuery(
+			"SELECT * FROM tematicaImpostor WHERE id = ?",
+			[id]
+		);
+
+		if (existente.length === 0) {
+			return res.status(404).send({
+				editadoExitoso: false,
+				mensaje: "Esa palabra no existe",
+			});
+		}
+
+		// No puede quedar repetida con otra palabra de la misma temática
+		const repetida = await realizarQuery(
+			"SELECT * FROM tematicaImpostor WHERE nombre = ? AND categoria = ? AND id <> ?",
+			[String(nombre).trim(), categoria, id]
+		);
+
+		if (repetida.length > 0) {
+			return res.status(409).send({
+				editadoExitoso: false,
+				mensaje: "Ya existe en esa temática",
+			});
+		}
+
+		await realizarQuery(
+			"UPDATE tematicaImpostor SET nombre = ?, categoria = ? WHERE id = ?",
+			[String(nombre).trim(), categoria, id]
+		);
+
+		return res.send({
+			editadoExitoso: true,
+			mensaje: "Cambios guardados con éxito",
+		});
+	} catch (error) {
+		console.log("Error al editar palabra:", error)
+		return res.status(500).send({
+			editadoExitoso: false,
+			mensaje: "No se pudo editar la palabra",
+		});
+	}
+}
+
+// DELETE: elimina una palabra por id
+async function handleEliminarPalabra(req, res) {
+	const { id } = req.body;
+
+	if (!id) {
+		return res.status(400).send({
+			eliminadoExitoso: false,
+			mensaje: "Debes enviar el id.",
+		});
+	}
+
+	try {
+		const resultado = await realizarQuery(
+			"DELETE FROM tematicaImpostor WHERE id = ?",
+			[id]
+		);
+
+		if (resultado.affectedRows === 0) {
+			return res.status(404).send({
+				eliminadoExitoso: false,
+				mensaje: "Esa palabra no existe",
+			});
+		}
+
+		return res.send({
+			eliminadoExitoso: true,
+			mensaje: "Palabra eliminada con éxito",
+		});
+	} catch (error) {
+		console.log("Error al eliminar palabra:", error)
+		return res.status(500).send({
+			eliminadoExitoso: false,
+			mensaje: "No se pudo eliminar la palabra",
+		});
+	}
+}
+
+app.get("/admin/palabras", requiereAdmin, handleVerPalabras);
+app.post("/admin/palabras", requiereAdmin, handleAgregarPalabra);
+app.put("/admin/palabras", requiereAdmin, handleEditarPalabra);
+app.delete("/admin/palabras", requiereAdmin, handleEliminarPalabra);
+
+// Cierra la sesión (la usa el botón "Cerrar sesión" del panel de administrador)
+app.post("/logout", (req, res) => {
+	req.session.destroy(() => {
+		res.clearCookie("connect.sid");
+		res.send({ mensaje: "Sesión cerrada" });
+	});
+});

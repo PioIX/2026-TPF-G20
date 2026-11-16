@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'   // AGREGADO: faltaba importar useEffect
 
 // Usa el mismo css que el login
 import styles from '../login/page.module.css'
 
 // URL base del back (la misma que usás en el login)
 const API = "http://localhost:4000"
-
+const CATEGORIAS = ["futbolistas", "paises", "peliculas", "animales", "cantantes"]
 function Admin() {
 
   const router = useRouter()
@@ -17,7 +18,7 @@ function Admin() {
 
   const [nombre, setNombre] = useState("")
   const [categoria, setCategoria] = useState("")
-
+  const [idElegido, setIdElegido] = useState(null)
   const [resultados, setResultados] = useState([])
   const [mensaje, setMensaje] = useState("")
   const [error, setError] = useState("")
@@ -49,31 +50,36 @@ function Admin() {
   }
 
   // ---------- BUSCAR ----------
+  // ---------- BUSCAR (GET) ----------
   async function buscar() {
     limpiarMensajes()
     setResultados([])
+    setIdElegido(null)
 
-    if (!nombre) {
-      setError("Escribí el nombre de lo que quieres buscar")
+    if (!nombre && !categoria) {
+      setError("Escribí un nombre o elegí una temática")
       return
     }
 
     try {
-      const { ok, data } = await pedir("/admin/buscar", { nombre: nombre })
+      const respuesta = await fetch(
+        API + "/admin/palabras?nombre=" + encodeURIComponent(nombre) + "&categoria=" + encodeURIComponent(categoria),
+        {
+          method: "GET",
+          credentials: "include"   // IMPORTANTE: manda la cookie de sesión (el back comprueba que sea admin)
+        }
+      )
 
-      if (!ok) {
+      const data = await respuesta.json()
+
+      if (respuesta.ok) {
+        if (data.palabras.length === 0) {
+          setError("No se encontró nada")
+        }
+        setResultados(data.palabras)
+      } else {
         setError(data.mensaje || "No se pudo buscar")
-        return
       }
-
-      // El back puede devolver un array direct
-      // o o { futbolistas: [...] }
-      const lista = Array.isArray(data) ? data : (data.tematicaImpostor || [])
-
-      if (lista.length === 0) {
-        setError("No se encontró nada con ese nombre")
-      }
-      setResultados(lista)
     } catch (e) {
       console.log("Error en el fetch:", e)
       setError("No se pudo conectar con el servidor")
@@ -82,28 +88,33 @@ function Admin() {
 
   // Al tocar un resultado, se cargan sus datos en el formulario
   function elegirResultado(tematicaImpostor) {
+    setIdElegido(tematicaImpostor.id)
     setNombre(tematicaImpostor.nombre)
     setCategoria(tematicaImpostor.categoria)
     setResultados([])
   }
 
-  // ---------- AGREGAR ----------
+  // ---------- AGREGAR (POST) ----------
   async function agregar() {
     limpiarMensajes()
 
-    if (!nombre ||  !categoria) {
-      setError("Completá todos los datos")
+    if (!nombre || !categoria) {
+      setError("Completá el nombre y elegí una temática")
       return
     }
 
     try {
-      const { ok, data } = await pedir("/admin/agregar", {
-        nombre: nombre,
-        categoria: categoria
+      const respuesta = await fetch(API + "/admin/palabras", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ nombre: nombre, categoria: categoria })
       })
 
-      if (ok) {
-        setMensaje(data.mensaje || "se ha agregado correctamente")
+      const data = await respuesta.json()
+
+      if (data.agregadoExitoso) {
+        setMensaje(data.mensaje)
       } else {
         setError(data.mensaje || "No se pudo agregar")
       }
@@ -113,21 +124,64 @@ function Admin() {
     }
   }
 
-  // ---------- ELIMINAR ----------
-  async function eliminar() {
+  // ---------- EDITAR (PUT) ----------
+  async function editar() {
     limpiarMensajes()
 
-    if (!nombre) {
-      setError("Escribí el nombre a eliminar")
+    if (!idElegido) {
+      setError("Buscá y elegí de la lista lo que querés editar")
+      return
+    }
+
+    if (!nombre || !categoria) {
+      setError("Completá el nombre y elegí una temática")
       return
     }
 
     try {
-      const { ok, data } = await pedir("/admin/eliminar", { nombre: nombre })
+      const respuesta = await fetch(API + "/admin/palabras", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: idElegido, nombre: nombre, categoria: categoria })
+      })
 
-      if (ok) {
-        setMensaje(data.mensaje || "se ha eliminado correctamente")
-        setCategoria("")
+      const data = await respuesta.json()
+
+      if (data.editadoExitoso) {
+        setMensaje(data.mensaje)
+      } else {
+        setError(data.mensaje || "No se pudo guardar")
+      }
+    } catch (e) {
+      console.log("Error en el fetch:", e)
+      setError("No se pudo conectar con el servidor")
+    }
+  }
+
+  // ---------- ELIMINAR (DELETE) ----------
+  async function eliminar() {
+    limpiarMensajes()
+
+    if (!idElegido) {
+      setError("Buscá y elegí de la lista lo que querés eliminar")
+      return
+    }
+
+    try {
+      const respuesta = await fetch(API + "/admin/palabras", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id: idElegido })
+      })
+
+      const data = await respuesta.json()
+
+      if (data.eliminadoExitoso) {
+        setMensaje(data.mensaje)
+        setIdElegido(null)
+        setNombre("")
       } else {
         setError(data.mensaje || "No se pudo eliminar")
       }
@@ -136,6 +190,7 @@ function Admin() {
       setError("No se pudo conectar con el servidor")
     }
   }
+
 
   // ---------- CERRAR SESIÓN ----------
   async function cerrarSesion() {
