@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 // Usa el mismo css que el login
@@ -28,7 +27,7 @@ function Admin() {
     if (sessionStorage.getItem("esAdmin") === "true") {
       setAutorizado(true)
     } else {
-      router.push("/login")
+      router.push("/admin")
     }
   }, [])
 
@@ -67,7 +66,8 @@ function Admin() {
         return
       }
 
-      // El back puede devolver un array directo o { futbolistas: [...] }
+      // El back puede devolver un array direct
+      // o o { futbolistas: [...] }
       const lista = Array.isArray(data) ? data : (data.tematicaImpostor || [])
 
       if (lista.length === 0) {
