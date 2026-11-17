@@ -6,6 +6,14 @@ import { useRouter } from 'next/navigation'
 // Conecta la página con su archivo de estilos
 import styles from './page.module.css'
 
+function Login() {
+
+  const router = useRouter()
+
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+
   async function iniciarSesion() {
     setError("")
 
@@ -72,7 +80,7 @@ import styles from './page.module.css'
       </div>
     </div>
   )
-
+}
 
 export default Login
 import Link from 'next/link'

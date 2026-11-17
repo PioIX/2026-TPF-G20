@@ -1,45 +1,11 @@
-.fondo {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(circle at top, #1e1b2e, #0b0a12 70%);
-  font-family: system-ui, sans-serif;
-  color: #e5e7eb;
-  padding: 16px;
-}
 
-.tarjeta {
-  width: 100%;
-  max-width: 360px;
-  background: #15131f;
-  border: 1px solid #2a2638;
-  border-radius: 16px;
-  box-shadow: 0 0 40px rgba(220, 38, 38, 0.15);
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.titulo {
-  margin: 0;
-  text-align: center;
-  font-size: 28px;
-  letter-spacing: 6px;
-  text-transform: uppercase;
-  font-weight: 800;
-  color: #ef4444;
-}
-
-.subtitulo {
-  margin: 0 0 8px;
-  text-align: center;
-  font-size: 14px;
+/* AGREGADO: clases del panel de administrador (admin/page.js usa este mismo css) */
+.label {
+  font-size: 13px;
   color: #9ca3af;
 }
 
-.input {
+.select {
   padding: 12px;
   background: #0f0d17;
   color: #e5e7eb;
@@ -49,26 +15,29 @@
   outline: none;
 }
 
-.input::placeholder {
-  color: #6b7280;
-}
-
-.input:focus {
+.select:focus {
   border-color: #dc2626;
   box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
 }
 
-.error {
-  margin: 0;
-  font-size: 13px;
+.botonSecundario {
+  padding: 12px;
+  background: transparent;
   color: #f87171;
-  text-align: center;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.boton {
-  margin-top: 4px;
+.botonSecundario:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.botonEliminar {
   padding: 12px;
-  background: #dc2626;
+  background: #7f1d1d;
   color: white;
   border: none;
   border-radius: 8px;
@@ -77,16 +46,47 @@
   cursor: pointer;
 }
 
-.boton:hover {
-  background: #b91c1c;
+.botonEliminar:hover {
+  background: #991b1b;
 }
 
-.link {
-  color: #80dbff;
-  font-weight: 600;
-  text-decoration: none;
+.exito {
+  margin: 0;
+  font-size: 13px;
+  color: #4ade80;
+  text-align: center;
 }
 
-.link:hover {
-  text-decoration: underline;
+.separador {
+  width: 100%;
+  border: none;
+  border-top: 1px solid #2a2638;
+  margin: 4px 0;
+}
+
+.resultados {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultado {
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  background: #0f0d17;
+  color: #e5e7eb;
+  border: 1px solid #2f2a40;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.resultado:hover {
+  border-color: #dc2626;
 }
