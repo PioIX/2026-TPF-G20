@@ -94,7 +94,7 @@ async function handleLogin(req, res) {
 			req.session.user = {
 				idUsuario: usuarioValido.idUsuario,
 				nickname: usuarioValido.nickname,
-			};
+			}; 			req.session.user.esAdmin = !!usuarioValido.esAdmin;  
 
 			return res.send({
 				loginExitoso: true,
@@ -547,7 +547,7 @@ async function handleRegister(req, res) {
 app.post("/register", handleRegister);
 
 //---------------------------Administrador----------------------------
-
+const TEMATICAS = ["futbolistas", "paises", "peliculas", "animales", "cantantes"];
 function requiereAdmin(req, res, next) {
 	if (!req.session.user || !req.session.user.esAdmin) {
 		return res.status(403).send({
