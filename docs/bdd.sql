@@ -12,7 +12,8 @@ CREATE TABLE usuarios (
     nickname varchar(1000),
     email varchar(1000),
     `password` varchar(1000),
-    victorias int
+    victorias int,
+    esAdmin bool
 );
 
 
@@ -27,6 +28,9 @@ CREATE TABLE tematicaImpostor (
     nombre varchar(1000),
     categoria VARCHAR(1000)
 );
+
+INSERT INTO usuarios (idUsuario, nickname, email, `password`, victorias, esAdmin) VALUES
+(1000000, 'admin', 'admin', 'pass', 0, true);
 
 INSERT INTO tematicaImpostor (id, nombre, categoria) VALUES 
 -- ANIMALES (1 a 50)
