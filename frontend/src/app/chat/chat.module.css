@@ -1,0 +1,184 @@
+/* Paleta
+   fondo:   #E8EDF1   panel: #FFFFFF   tinta: #14232F
+   acento:  #0E6B6B   acento hover: #0B5656   tinte: #E2F0EE
+   borde:   #D3DCE3   texto suave: #566673
+*/
+
+.contenedor {
+  --fondo: #e8edf1;
+  --panel: #ffffff;
+  --tinta: #14232f;
+  --suave: #566673;
+  --borde: #d3dce3;
+  --acento: #0e6b6b;
+  --acento-hover: #0b5656;
+  --tinte: #e2f0ee;
+
+  box-sizing: border-box;
+  width: min(100% - 2rem, 640px);
+  margin: 2.5rem auto;
+  padding: 1.75rem;
+  background: var(--panel);
+  color: var(--tinta);
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(20, 35, 47, 0.06);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+.contenedor *,
+.contenedor *::before,
+.contenedor *::after {
+  box-sizing: border-box;
+}
+
+/* Fondo de la página sin tocar el layout global */
+:global(body):has(.contenedor) {
+  background: #e8edf1;
+}
+
+.titulo {
+  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.meta {
+  margin: 0 0 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--borde);
+  color: var(--suave);
+  font-size: 0.9rem;
+}
+
+.subtitulo {
+  margin: 1.75rem 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* Filas con input + botón */
+.fila {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  font: inherit;
+  color: var(--tinta);
+  background: #f7f9fb;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.input::placeholder {
+  color: #8b99a5;
+}
+
+.input:hover {
+  border-color: #b7c4cf;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 1px;
+  background: var(--panel);
+  border-color: var(--acento);
+}
+
+.boton {
+  padding: 0.65rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--acento);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+.boton:hover {
+  background: var(--acento-hover);
+}
+
+.boton:active {
+  transform: translateY(1px);
+}
+
+.boton:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+/* Botón secundario (cambiar de sala) */
+.botonSecundario {
+  color: var(--acento);
+  background: transparent;
+  border: 1px solid var(--acento);
+}
+
+.botonSecundario:hover {
+  color: #ffffff;
+}
+
+/* Lista de mensajes */
+.mensajes {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 8rem;
+  max-height: 22rem;
+  overflow-y: auto;
+  background: #f7f9fb;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+}
+
+.mensajes:empty::before {
+  content: "Aún no hay mensajes en esta sala.";
+  margin: auto;
+  color: var(--suave);
+  font-size: 0.9rem;
+}
+
+.mensaje {
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 0.5rem 0.8rem;
+  background: var(--tinte);
+  border-radius: 12px 12px 12px 4px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .contenedor {
+    margin: 1rem auto;
+    padding: 1.25rem;
+  }
+
+  .fila {
+    flex-direction: column;
+  }
+
+  .boton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input,
+  .boton {
+    transition: none;
+  }
+}
