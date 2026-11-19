@@ -94,7 +94,7 @@ async function handleLogin(req, res) {
 			req.session.user = {
 				idUsuario: usuarioValido.idUsuario,
 				nickname: usuarioValido.nickname,
-			}; 			req.session.user.esAdmin = !!usuarioValido.esAdmin;  
+			}; req.session.user.esAdmin = !!usuarioValido.esAdmin;
 
 			return res.send({
 				loginExitoso: true,
@@ -113,8 +113,8 @@ async function handleLogin(req, res) {
 		return res.status(500).send({
 			mensaje: "Error en la base de datos",
 			error: error.message,
-	});
-}
+		});
+	}
 }
 app.post("/login", handleLogin);   // AGREGADO: ruta que usa el page del login
 
@@ -195,7 +195,7 @@ function avisarListos(room) {
 	const sala = salas[room]
 	if (!sala) return
 
-		io.to(room).emit("estadoListos", { listos: sala.listos, total: sala.jugadores.length, minimo: MIN_JUGADORES })
+	io.to(room).emit("estadoListos", { listos: sala.listos, total: sala.jugadores.length, minimo: MIN_JUGADORES })
 }
 
 // AGREGADO: sortea la palabra y el impostor con Math.random y le manda a cada uno SOLO lo suyo
@@ -415,10 +415,10 @@ io.on("connection", (socket) => {
 
 		//io.emit("respuestaServidor", { mensaje: data.mensaje })
 
-		listaMensajes.push( { mensaje: data.mensaje, username: data.username, room: room, id: listaMensajes.length } )
+		listaMensajes.push({ mensaje: data.mensaje, username: data.username, room: room, id: listaMensajes.length })
 
 		// Emitimos a toda la room un evento que contenga los 3 datos relevantes
-		io.to(room).emit("respuestaServidor", listaMensajes.filter( (mensaje) => { return mensaje.room == room } ) )
+		io.to(room).emit("respuestaServidor", listaMensajes.filter((mensaje) => { return mensaje.room == room }))
 
 		// AGREGADO: cuando todos dieron sus pistas (RONDAS_PISTAS rondas) pasan a votar
 		sala.pistas++
