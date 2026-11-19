@@ -107,7 +107,7 @@ function Admin() {
   async function agregar() {
     limpiarMensajes()
 
-    if (!nombre ||  !categoria) {
+    if (!nombre || !categoria) {
       setError("Completá todos los datos")
       return
     }
